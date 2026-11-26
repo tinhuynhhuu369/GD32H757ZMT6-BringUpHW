@@ -28,6 +28,10 @@ extern volatile uint32_t g_tmr_clk_hz;
 void     TMR_Init(void);
 uint32_t TMR_GetTick(void);
 
+/* CK_TIMER of the APB1 timers (TIMER1..6, 22, 23, 30, 31, 50, 51) in Hz,
+   computed from the RCU settings */
+uint32_t TMR_GetApb1TimerClock(void);
+
 /* true once period_ms has passed since *last, then *last is advanced.
    Non-blocking: call it repeatedly from the main loop. */
 bool     TMR_Elapsed(uint32_t *last, uint32_t period_ms);

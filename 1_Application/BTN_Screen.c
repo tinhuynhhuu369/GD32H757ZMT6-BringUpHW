@@ -11,11 +11,14 @@
         Down    YELLOW  / BLACK   arrow down
         Left    RED     / WHITE   arrow left
         Right   BLACK   / WHITE   arrow right
+
+    Each press plays the SDS key tone (BUZ_TONE_KEY, one beep).
 */
 
 #include "BTN_Screen.h"
 #include "LCD_ILI9806G_Driver.h"
 #include "LED_Driver.h"
+#include "BUZZER_Driver.h"
 
 #define SCR_CX      (ILI9806G_WIDTH / 2U)       /* 400 */
 #define SCR_CY      (ILI9806G_HEIGHT / 2U)      /* 240 */
@@ -148,6 +151,8 @@ void BTN_Screen_Task(void)
     }
 
     s_active = true;
+    /* beep first: non-blocking, it plays while the page is drawn */
+    BUZ_Play(BUZ_TONE_KEY);
     BTN_Screen_Draw(last);
     /* YELLOW LED toggles once per handled press */
     LED_Toggle(LED_YELLOW);

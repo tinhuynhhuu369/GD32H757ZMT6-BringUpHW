@@ -38,6 +38,7 @@ OF SUCH DAMAGE.
 #include "TIMER_Tick_Driver.h"
 #include "LED_Driver.h"
 #include "BTN_Driver.h"
+#include "BUZZER_Driver.h"
 #include "BTN_Screen.h"
 
 /*!
@@ -113,6 +114,8 @@ int main(void)
     /* buttons: GPIO input + pull-up; before TMR_Init so the TIMER6 ISR never
        scans them half-initialised */
     BTN_Init();
+    /* buzzer: PF13 = TIMER23_CH2 PWM, silent (timed beeps end in the TIMER6 ISR) */
+    BUZ_Init();
     /* TIMER6: 1 ms tick, drives LED blinking and LCD step timing */
     TMR_Init();
 
@@ -129,6 +132,8 @@ int main(void)
     }
     /* backlight on after the panel has been filled */
     ILI9806G_LCD_SetBrightness(1U);
+    /* power-on: 2 beeps, same sound as the SDS tools (non-blocking) */
+    BUZ_Play(BUZ_TONE_POWER);
 
     while(1) {
         /* LCD colour test runs only until the first button press,
@@ -145,7 +150,7 @@ int main(void)
             }
         }
 
-        /* button press -> page of that button (YELLOW LED toggles per press) */
+        /* button press -> beep + page of that button (YELLOW LED toggles per press) */
         BTN_Screen_Task();
 
         /* other non-blocking tasks go here */

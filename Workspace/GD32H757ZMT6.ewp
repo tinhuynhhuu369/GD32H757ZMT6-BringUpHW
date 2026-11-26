@@ -1098,6 +1098,12 @@
                 <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\BTN_Driver.h</name>
             </file>
             <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\BUZZER_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\BUZZER_Driver.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\FSMC_LCD_Driver.h</name>
             </file>
             <file>

@@ -37,6 +37,7 @@ OF SUCH DAMAGE.
 #include "TIMER_Tick_Driver.h"
 #include "LED_Driver.h"
 #include "BTN_Driver.h"
+#include "BUZZER_Driver.h"
 
 /*!
     \brief      this function handles NMI exception
@@ -180,5 +181,6 @@ void TIMER6_IRQHandler(void)
         TMR_Tick_Increment();
         LED_Tick_1ms();
         BTN_Tick_1ms();
+        BUZ_Tick_1ms();
     }
 }

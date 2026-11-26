@@ -14,7 +14,7 @@ volatile uint32_t        g_tmr_clk_hz = 0U;
  *   TIMERSEL = 1 (x4): APB1PSC <= /4  -> CK_TIMER = CK_AHB, else 4 x CK_APB1
  * With the 600 MHz config (AHB = 300 MHz, APB1 = AHB/2): CK_TIMER = 300 MHz.
  * ------------------------------------------------------------------------- */
-static uint32_t TMR_GetApb1TimerClock(void)
+uint32_t TMR_GetApb1TimerClock(void)
 {
     uint32_t ahb  = rcu_clock_freq_get(CK_AHB);
     uint32_t apb1 = rcu_clock_freq_get(CK_APB1);
