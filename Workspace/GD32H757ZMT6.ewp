@@ -1086,6 +1086,12 @@
         <file>
             <name>$PROJ_DIR$\..\1_Application\main.c</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\..\1_Application\VBUS_Screen.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\1_Application\VBUS_Screen.h</name>
+        </file>
     </group>
     <group>
         <name>3_Hardware_Core</name>
@@ -1123,6 +1129,12 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\TIMER_Tick_Driver.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\VBUS_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\VBUS_Driver.h</name>
             </file>
         </group>
         <group>

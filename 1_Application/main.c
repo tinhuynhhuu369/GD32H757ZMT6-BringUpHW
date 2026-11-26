@@ -39,7 +39,9 @@ OF SUCH DAMAGE.
 #include "LED_Driver.h"
 #include "BTN_Driver.h"
 #include "BUZZER_Driver.h"
+#include "VBUS_Driver.h"
 #include "BTN_Screen.h"
+#include "VBUS_Screen.h"
 
 /*!
     \brief      configure the MPU: map the LCD EXMC window as Device memory
@@ -116,6 +118,8 @@ int main(void)
     BTN_Init();
     /* buzzer: PF13 = TIMER23_CH2 PWM, silent (timed beeps end in the TIMER6 ISR) */
     BUZ_Init();
+    /* USB VBUS detect: PG8 input + pull-down, read with HasVBUS() */
+    VBUS_Init();
     /* TIMER6: 1 ms tick, drives LED blinking and LCD step timing */
     TMR_Init();
 
@@ -136,22 +140,28 @@ int main(void)
     BUZ_Play(BUZ_TONE_POWER);
 
     while(1) {
-        /* LCD colour test runs only until the first button press,
-           after that the LCD belongs to BTN_Screen */
-        if(!BTN_Screen_IsActive()) {
-            /* non-blocking: draws a step, then returns while it is held */
-            ILI9806G_LCD_Test_Task();
+        /* USB plugged (PG8 HIGH) -> USB icon page, unplugged -> previous screen */
+        VBUS_Screen_Task();
 
-            /* YELLOW LED on while the LCD test sequence runs, off during the pause */
-            if(ILI9806G_LCD_Test_IsRunning()) {
-                LED_On(LED_YELLOW);
-            } else {
-                LED_Off(LED_YELLOW);
+        /* while the USB page is up it owns the LCD: test and buttons pause */
+        if(!VBUS_Screen_IsShown()) {
+            /* LCD colour test runs only until the first button press,
+               after that the LCD belongs to BTN_Screen */
+            if(!BTN_Screen_IsActive()) {
+                /* non-blocking: draws a step, then returns while it is held */
+                ILI9806G_LCD_Test_Task();
+
+                /* YELLOW LED on while the LCD test sequence runs, off during the pause */
+                if(ILI9806G_LCD_Test_IsRunning()) {
+                    LED_On(LED_YELLOW);
+                } else {
+                    LED_Off(LED_YELLOW);
+                }
             }
-        }
 
-        /* button press -> beep + page of that button (YELLOW LED toggles per press) */
-        BTN_Screen_Task();
+            /* button press -> beep + page of that button (YELLOW LED toggles per press) */
+            BTN_Screen_Task();
+        }
 
         /* other non-blocking tasks go here */
     }

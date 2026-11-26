@@ -8,6 +8,9 @@
 /* draw the full-screen page of one button (background colour + icon) */
 void BTN_Screen_Draw(btn_id_t id);
 
+/* draw the last page again (after another screen covered it) */
+void BTN_Screen_Redraw(void);
+
 /* main loop: takes pending presses and draws the page of the last one */
 void BTN_Screen_Task(void);
 

@@ -45,7 +45,8 @@ static const page_color_t s_page_color[BTN_COUNT] = {
     [BTN_RIGHT]  = {ILI9806G_BLACK,   ILI9806G_WHITE},
 };
 
-static bool s_active = false;
+static bool     s_active = false;
+static btn_id_t s_last   = BTN_COUNT;   /* last page drawn, BTN_COUNT = none */
 
 /* ---------------------------------------------------------------------------
  * Filled isosceles triangle, apex at (ax, ay), pointing towards dir.
@@ -120,6 +121,7 @@ void BTN_Screen_Draw(btn_id_t id)
     if (id >= BTN_COUNT) {
         return;
     }
+    s_last = id;
     bg = s_page_color[id].bg;
     fg = s_page_color[id].fg;
 
@@ -135,6 +137,11 @@ void BTN_Screen_Draw(btn_id_t id)
     case BTN_RIGHT:  draw_arrow(DIR_RIGHT, fg);  break;
     default:         break;
     }
+}
+
+void BTN_Screen_Redraw(void)
+{
+    BTN_Screen_Draw(s_last);    /* no-op while s_last == BTN_COUNT */
 }
 
 void BTN_Screen_Task(void)
