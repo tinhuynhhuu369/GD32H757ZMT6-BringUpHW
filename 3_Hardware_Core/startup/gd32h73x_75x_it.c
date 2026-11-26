@@ -33,7 +33,6 @@ OF SUCH DAMAGE.
 */
 
 #include "gd32h73x_75x_it.h"
-#include "main.h"
 #include "systick.h"
 
 /*!
@@ -161,6 +160,5 @@ void FPU_IRQHandler(void)
 */
 void SysTick_Handler(void)
 {
-    led_spark();
     delay_decrement();
 }
