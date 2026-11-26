@@ -347,6 +347,7 @@
                     <state>$PROJ_DIR$\..\3_Hardware_Core\CMSIS</state>
                     <state>$PROJ_DIR$\..\3_Hardware_Core\GD32H73x_75x_standard_peripheral\Include</state>
                     <state>$PROJ_DIR$\..\3_Hardware_Core\startup</state>
+                    <state>$PROJ_DIR$\..\3_Hardware_Core\BSP</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1082,6 +1083,18 @@
     </group>
     <group>
         <name>3_Hardware_Core</name>
+        <group>
+            <name>BSP</name>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\FSMC_LCD_Driver.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\LCD_ILI9806G_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\LCD_ILI9806G_Driver.h</name>
+            </file>
+        </group>
         <group>
             <name>GD32H73x_75x_standard_peripheral</name>
             <file>
