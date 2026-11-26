@@ -58,5 +58,7 @@ void PendSV_Handler(void);
 void FPU_IRQHandler(void);
 /* this function handles SysTick exception */
 void SysTick_Handler(void);
+/* this function handles TIMER6 update interrupt (1 ms tick) */
+void TIMER6_IRQHandler(void);
 
 #endif /* GD32H73X_75X_IT_H */

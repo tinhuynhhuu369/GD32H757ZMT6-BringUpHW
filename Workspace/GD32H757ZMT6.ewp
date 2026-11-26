@@ -1078,6 +1078,12 @@
     <group>
         <name>1_Application</name>
         <file>
+            <name>$PROJ_DIR$\..\1_Application\BTN_Screen.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\..\1_Application\BTN_Screen.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\..\1_Application\main.c</name>
         </file>
     </group>
@@ -1086,6 +1092,12 @@
         <group>
             <name>BSP</name>
             <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\BTN_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\BTN_Driver.h</name>
+            </file>
+            <file>
                 <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\FSMC_LCD_Driver.h</name>
             </file>
             <file>
@@ -1093,6 +1105,18 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\LCD_ILI9806G_Driver.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\LED_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\LED_Driver.h</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\TIMER_Tick_Driver.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\3_Hardware_Core\BSP\TIMER_Tick_Driver.h</name>
             </file>
         </group>
         <group>

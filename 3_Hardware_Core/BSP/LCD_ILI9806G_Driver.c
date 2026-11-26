@@ -7,7 +7,7 @@
 */
 
 #include "LCD_ILI9806G_Driver.h"
-#include "systick.h"
+#include "TIMER_Tick_Driver.h"
 
 /* ---------------------------------------------------------------------------
  * EXMC timing (CK_EXMC = CK_AHB = 300 MHz -> 3.33 ns / cycle)
@@ -81,9 +81,9 @@ static void ILI9806G_Reset(void)
     gpio_output_options_set(LCDRES_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_12MHZ, LCDRES_PIN);
 
     gpio_bit_reset(LCDRES_PORT, LCDRES_PIN);
-    delay_1ms(10);
+    TMR_DelayMs(10);
     gpio_bit_set(LCDRES_PORT, LCDRES_PIN);
-    delay_1ms(120);
+    TMR_DelayMs(120);
 }
 
 /* ---------------------------------------------------------------------------
@@ -319,7 +319,7 @@ static void ILI9806G_LCD_Config(void)
     NW_LCD_Write_Data(0x0055);
 
     NW_LCD_Write_Cmd(0x0011); //Exit Sleep 
-    delay_1ms(120); 
+    TMR_DelayMs(120); 
 
     ILI9806G_LCD_Fill_Screen(ILI9806G_WHITE);
     NW_LCD_Write_Cmd(0x0029); // Display On
@@ -476,7 +476,7 @@ static void ILI9806G_LCD_Config(void)
     NW_LCD_Write_Data(0x0000); 
     
     NW_LCD_Write_Cmd(0x0011); //Exit Sleep 
-    delay_1ms(120); 
+    TMR_DelayMs(120); 
 
     ILI9806G_LCD_Fill_Screen(ILI9806G_WHITE);
                                              
@@ -640,7 +640,7 @@ static void ILI9806G_LCD_115FPC_B_Config(void)
 	NW_LCD_Write_Data(0x0000); 
 	
 	NW_LCD_Write_Cmd(0x0011); //Exit Sleep 
-	delay_1ms(500); 
+	TMR_DelayMs(500); 
 	
 	ILI9806G_LCD_Fill_Screen(ILI9806G_WHITE);
 	
@@ -676,30 +676,83 @@ bool ILI9806G_LCD_IsDetected(void)
            ((id[3] & 0xFFU) == ILI9806G_ID3);
 }
 
-void ILI9806G_LCD_Function_Test(void)
+/* ---------------------------------------------------------------------------
+ * Function test, non-blocking: each step draws once, then holds for hold_ms
+ * measured on the TIMER6 tick. Call ILI9806G_LCD_Test_Task() from the main
+ * loop; it returns immediately while a step is being held.
+ * ------------------------------------------------------------------------- */
+typedef enum {
+    LCD_TEST_BLUE = 0,
+    LCD_TEST_RED,
+    LCD_TEST_GREEN,
+    LCD_TEST_MAGENTA,
+    LCD_TEST_ORIENTATION,
+    LCD_TEST_IDLE,              /* pause between two runs, nothing drawn */
+    LCD_TEST_STEP_COUNT
+} lcd_test_step_t;
+
+static const uint16_t s_test_hold_ms[LCD_TEST_STEP_COUNT] = {
+    [LCD_TEST_BLUE]        = 500U,
+    [LCD_TEST_RED]         = 500U,
+    [LCD_TEST_GREEN]       = 500U,
+    [LCD_TEST_MAGENTA]     = 500U,
+    [LCD_TEST_ORIENTATION] = 1000U,
+    [LCD_TEST_IDLE]        = 500U,
+};
+
+static lcd_test_step_t s_test_step  = LCD_TEST_BLUE;
+static bool            s_test_drawn = false;
+static uint32_t        s_test_t0    = 0U;
+
+static void ILI9806G_LCD_Test_Draw(lcd_test_step_t step)
 {
-    ILI9806G_LCD_Fill_Screen(ILI9806G_BLUE);
-    delay_1ms(500);
+    switch (step) {
+    case LCD_TEST_BLUE:    ILI9806G_LCD_Fill_Screen(ILI9806G_BLUE);    break;
+    case LCD_TEST_RED:     ILI9806G_LCD_Fill_Screen(ILI9806G_RED);     break;
+    case LCD_TEST_GREEN:   ILI9806G_LCD_Fill_Screen(ILI9806G_GREEN);   break;
+    case LCD_TEST_MAGENTA: ILI9806G_LCD_Fill_Screen(ILI9806G_MAGENTA); break;
+    case LCD_TEST_ORIENTATION:
+        /* orientation check: red square top-left, green bottom-right, frame in yellow */
+        ILI9806G_LCD_Fill_Screen(ILI9806G_WHITE);
+        ILI9806G_LCD_Fill_Rect(0, 0, 49, 49, ILI9806G_RED);
+        ILI9806G_LCD_Fill_Rect(ILI9806G_WIDTH - 50, ILI9806G_HEIGHT - 50,
+                               ILI9806G_WIDTH - 1, ILI9806G_HEIGHT - 1, ILI9806G_GREEN);
+        ILI9806G_LCD_DrawHLine(0, 0, ILI9806G_WIDTH, ILI9806G_YELLOW);
+        ILI9806G_LCD_DrawHLine(0, ILI9806G_HEIGHT - 1, ILI9806G_WIDTH, ILI9806G_YELLOW);
+        ILI9806G_LCD_DrawVLine(0, 0, ILI9806G_HEIGHT, ILI9806G_YELLOW);
+        ILI9806G_LCD_DrawVLine(ILI9806G_WIDTH - 1, 0, ILI9806G_HEIGHT, ILI9806G_YELLOW);
+        break;
+    default:
+        break;
+    }
+}
 
-    ILI9806G_LCD_Fill_Screen(ILI9806G_RED);
-    delay_1ms(500);
+void ILI9806G_LCD_Test_Reset(void)
+{
+    s_test_step  = LCD_TEST_BLUE;
+    s_test_drawn = false;
+}
 
-    ILI9806G_LCD_Fill_Screen(ILI9806G_GREEN);
-    delay_1ms(500);
+void ILI9806G_LCD_Test_Task(void)
+{
+    if (!s_test_drawn) {
+        ILI9806G_LCD_Test_Draw(s_test_step);
+        /* hold time starts after the (slow) fill has finished */
+        s_test_t0    = TMR_GetTick();
+        s_test_drawn = true;
+        return;
+    }
 
-    ILI9806G_LCD_Fill_Screen(ILI9806G_MAGENTA);
-    delay_1ms(500);
+    if (TMR_Elapsed(&s_test_t0, s_test_hold_ms[s_test_step])) {
+        s_test_step  = (s_test_step + 1U < LCD_TEST_STEP_COUNT)
+                     ? (lcd_test_step_t)(s_test_step + 1U) : LCD_TEST_BLUE;
+        s_test_drawn = false;
+    }
+}
 
-    /* orientation check: red square top-left, green bottom-right, frame in yellow */
-    ILI9806G_LCD_Fill_Screen(ILI9806G_WHITE);
-    ILI9806G_LCD_Fill_Rect(0, 0, 49, 49, ILI9806G_RED);
-    ILI9806G_LCD_Fill_Rect(ILI9806G_WIDTH - 50, ILI9806G_HEIGHT - 50,
-                           ILI9806G_WIDTH - 1, ILI9806G_HEIGHT - 1, ILI9806G_GREEN);
-    ILI9806G_LCD_DrawHLine(0, 0, ILI9806G_WIDTH, ILI9806G_YELLOW);
-    ILI9806G_LCD_DrawHLine(0, ILI9806G_HEIGHT - 1, ILI9806G_WIDTH, ILI9806G_YELLOW);
-    ILI9806G_LCD_DrawVLine(0, 0, ILI9806G_HEIGHT, ILI9806G_YELLOW);
-    ILI9806G_LCD_DrawVLine(ILI9806G_WIDTH - 1, 0, ILI9806G_HEIGHT, ILI9806G_YELLOW);
-    delay_1ms(1000);
+bool ILI9806G_LCD_Test_IsRunning(void)
+{
+    return (s_test_step != LCD_TEST_IDLE);
 }
 
 bool ILI9806G_LCD_Init(void)

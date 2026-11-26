@@ -59,7 +59,12 @@ bool ILI9806G_LCD_Init(void);
 void ILI9806G_LCD_WriteRAM(uint16_t RGB_Code);
 const uint16_t* ILI9806G_ReadJDECID(void);
 bool ILI9806G_LCD_IsDetected(void);
-void ILI9806G_LCD_Function_Test(void);
+/* non-blocking colour/orientation test, step timing from the TIMER6 tick:
+   call ILI9806G_LCD_Test_Task() every main-loop pass */
+void ILI9806G_LCD_Test_Task(void);
+void ILI9806G_LCD_Test_Reset(void);
+/* false during the pause between two runs */
+bool ILI9806G_LCD_Test_IsRunning(void);
 
 /*****************************************************************************/
 void ILI9806G_LCD_Addr_Set(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);

@@ -34,6 +34,9 @@ OF SUCH DAMAGE.
 
 #include "gd32h73x_75x_it.h"
 #include "systick.h"
+#include "TIMER_Tick_Driver.h"
+#include "LED_Driver.h"
+#include "BTN_Driver.h"
 
 /*!
     \brief      this function handles NMI exception
@@ -161,4 +164,21 @@ void FPU_IRQHandler(void)
 void SysTick_Handler(void)
 {
     delay_decrement();
+}
+
+/*!
+    \brief      this function handles TIMER6 update interrupt (1 ms tick)
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void TIMER6_IRQHandler(void)
+{
+    if(RESET != timer_interrupt_flag_get(TMR_TICK_TIMER, TIMER_INT_FLAG_UP)) {
+        timer_interrupt_flag_clear(TMR_TICK_TIMER, TIMER_INT_FLAG_UP);
+
+        TMR_Tick_Increment();
+        LED_Tick_1ms();
+        BTN_Tick_1ms();
+    }
 }

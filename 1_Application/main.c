@@ -35,6 +35,10 @@ OF SUCH DAMAGE.
 #include "gd32h73x_75x.h"
 #include "systick.h"
 #include "LCD_ILI9806G_Driver.h"
+#include "TIMER_Tick_Driver.h"
+#include "LED_Driver.h"
+#include "BTN_Driver.h"
+#include "BTN_Screen.h"
 
 /*!
     \brief      configure the MPU: map the LCD EXMC window as Device memory
@@ -104,43 +108,46 @@ int main(void)
     /* configure systick */
     systick_config();
 
-    /* enable the LED GPIO clock */
-    rcu_periph_clock_enable(RCU_GPIOF);
-    rcu_periph_clock_enable(RCU_GPIOG);
-    /* configure RED LED */
-    gpio_mode_set(GPIOF, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_14);
-    gpio_output_options_set(GPIOF, GPIO_OTYPE_PP, GPIO_OSPEED_60MHZ, GPIO_PIN_14);
-    /* configure YELLOW LED */
-    gpio_mode_set(GPIOG, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_13);
-    gpio_output_options_set(GPIOG, GPIO_OTYPE_PP, GPIO_OSPEED_60MHZ, GPIO_PIN_13);
-    /* configure GREEN LED */
-    gpio_mode_set(GPIOG, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_12);
-    gpio_output_options_set(GPIOG, GPIO_OTYPE_PP, GPIO_OSPEED_60MHZ, GPIO_PIN_12);
+    /* LEDs: GPIO output, all off */
+    LED_Init();
+    /* buttons: GPIO input + pull-up; before TMR_Init so the TIMER6 ISR never
+       scans them half-initialised */
+    BTN_Init();
+    /* TIMER6: 1 ms tick, drives LED blinking and LCD step timing */
+    TMR_Init();
 
-    /* reset RED LED */
-    gpio_bit_reset(GPIOF, GPIO_PIN_14);
-    /* reset YELLOW LED */
-    gpio_bit_reset(GPIOG, GPIO_PIN_13);
-    /* reset GREEN LED */
-    gpio_bit_reset(GPIOG, GPIO_PIN_12);
+    /* GREEN LED = heartbeat, toggled by the TIMER6 ISR (keeps blinking even
+       while the main loop is busy filling the LCD) */
+    LED_Blink(LED_GREEN, 500U);
 
-    /* LCD: GPIO + EXMC + reset + ID check + init sequence */
+    /* LCD: GPIO + EXMC + reset + ID check + init sequence
+       (the reset / sleep-out waits use TMR_DelayMs, so TMR_Init must run first) */
     lcd_ok = ILI9806G_LCD_Init();
     /* RED LED on = LCD ID read back failed (see g_lcd_id in the debugger) */
     if(!lcd_ok) {
-        gpio_bit_set(GPIOF, GPIO_PIN_14);
+        LED_On(LED_RED);
     }
     /* backlight on after the panel has been filled */
     ILI9806G_LCD_SetBrightness(1U);
 
     while(1) {
-        /* GREEN LED = heartbeat, YELLOW LED on while the LCD test is drawing */
-        gpio_bit_toggle(GPIOG, GPIO_PIN_12);
-        gpio_bit_set(GPIOG, GPIO_PIN_13);
+        /* LCD colour test runs only until the first button press,
+           after that the LCD belongs to BTN_Screen */
+        if(!BTN_Screen_IsActive()) {
+            /* non-blocking: draws a step, then returns while it is held */
+            ILI9806G_LCD_Test_Task();
 
-        ILI9806G_LCD_Function_Test();
+            /* YELLOW LED on while the LCD test sequence runs, off during the pause */
+            if(ILI9806G_LCD_Test_IsRunning()) {
+                LED_On(LED_YELLOW);
+            } else {
+                LED_Off(LED_YELLOW);
+            }
+        }
 
-        gpio_bit_reset(GPIOG, GPIO_PIN_13);
-        delay_1ms(500);
+        /* button press -> page of that button (YELLOW LED toggles per press) */
+        BTN_Screen_Task();
+
+        /* other non-blocking tasks go here */
     }
 }
